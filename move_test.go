@@ -1,4 +1,4 @@
-package filemanipulation
+package filemanipulator
 
 import (
 	"errors"
