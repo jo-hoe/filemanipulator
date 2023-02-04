@@ -4,8 +4,8 @@ import "io"
 
 type FileProtocolHandler interface {
 	DoesFileExist(filePath string) bool
-	Open(filePath string) (reader io.ReadWriteCloser, err error)
-	Create(filePath string) (reader io.ReadWriteCloser, err error)
+	Open(filePath string) (readerWriter io.ReadWriteCloser, err error)
+	Create(filePath string) (readerWriter io.ReadWriteCloser, err error)
 	Remove(filePath string) (err error)
 }
 
