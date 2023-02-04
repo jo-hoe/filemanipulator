@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func CalculateFileHash(filePath string) (result []byte, err error) {
+func calculateFileHash(filePath string) (result []byte, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return result, err
@@ -23,11 +23,11 @@ func CalculateFileHash(filePath string) (result []byte, err error) {
 }
 
 func AreFileEqual(leftFilePath string, rightFilePath string) (bool, error) {
-	leftFileHash, err := CalculateFileHash(leftFilePath)
+	leftFileHash, err := calculateFileHash(leftFilePath)
 	if err != nil {
 		return false, err
 	}
-	rightFileHash, err := CalculateFileHash(rightFilePath)
+	rightFileHash, err := calculateFileHash(rightFilePath)
 	if err != nil {
 		return false, err
 	}
