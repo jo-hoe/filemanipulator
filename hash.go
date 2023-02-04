@@ -7,26 +7,27 @@ import (
 	"os"
 )
 
-func calculateFileHash(filePath string) ([]byte, error) {
+func CalculateFileHash(filePath string) (result []byte, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return make([]byte, 0), err
+		return result, err
 	}
 	defer file.Close()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {
-		return make([]byte, 0), err
+		return result, err
 	}
-	return hasher.Sum(nil), err
+	result = hasher.Sum(nil)
+	return result, err
 }
 
-func areFileEqual(leftFilePath string, rightFilePath string) (bool, error) {
-	leftFileHash, err := calculateFileHash(leftFilePath)
+func AreFileEqual(leftFilePath string, rightFilePath string) (bool, error) {
+	leftFileHash, err := CalculateFileHash(leftFilePath)
 	if err != nil {
 		return false, err
 	}
-	rightFileHash, err := calculateFileHash(rightFilePath)
+	rightFileHash, err := CalculateFileHash(rightFilePath)
 	if err != nil {
 		return false, err
 	}

@@ -1,25 +1,33 @@
 package filemanipulator
 
-import (
-	"errors"
-	"io"
-	"os"
-)
+import "io"
 
-func doesFileExist(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return !errors.Is(err, os.ErrNotExist)
+type FileProtocolHandler interface {
+	DoesFileExist(filePath string) bool
+	Open(filePath string) (reader io.ReadWriteCloser, err error)
+	Create(filePath string) (reader io.ReadWriteCloser, err error)
+	Remove(filePath string) (err error)
 }
 
-func MoveFile(sourcePath, targetPath string) (err error) {
-	inputFile, err := os.Open(sourcePath)
+type FileManipulator struct {
+	handler FileProtocolHandler
+}
+
+func NewFileManipulator(handler FileProtocolHandler) *FileManipulator {
+	return &FileManipulator{
+		handler: handler,
+	}
+}
+
+func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
+	inputFile, err := m.handler.Open(sourcePath)
 	if err != nil {
 		return err
 	}
 
-	if doesFileExist(targetPath) {
+	if m.handler.DoesFileExist(targetPath) {
 		// check if this is the same file
-		filesEqual, err := areFileEqual(sourcePath, targetPath)
+		filesEqual, err := AreFileEqual(sourcePath, targetPath)
 		if err != nil {
 			return err
 		}
@@ -29,7 +37,7 @@ func MoveFile(sourcePath, targetPath string) (err error) {
 			if err != nil {
 				return err
 			}
-			err = os.Remove(sourcePath)
+			err = m.handler.Remove(sourcePath)
 			if err != nil {
 				return err
 			}
@@ -37,14 +45,14 @@ func MoveFile(sourcePath, targetPath string) (err error) {
 			return nil
 		} else {
 			// remove destination file and continue
-			err = os.Remove(targetPath)
+			err = m.handler.Remove(targetPath)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	outputFile, err := os.Create(targetPath)
+	outputFile, err := m.handler.Create(targetPath)
 	if err != nil {
 		inputFile.Close()
 		return err
@@ -61,7 +69,7 @@ func MoveFile(sourcePath, targetPath string) (err error) {
 		}
 
 		// The copy was successful, so now delete the original file
-		err = os.Remove(sourcePath)
+		err = m.handler.Remove(sourcePath)
 	}()
 
 	// actual file copy

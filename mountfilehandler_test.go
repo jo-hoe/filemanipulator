@@ -47,7 +47,8 @@ func TestMoveFile(t *testing.T) {
 	target := filepath.Join(rightDirectory, fileName)
 	origin := filepath.Join(leftDirectory, fileName)
 
-	err := MoveFile(origin, target)
+	manipluator := NewFileManipulator(&MountedFileHandler{})
+	err := manipluator.MoveFile(origin, target)
 	if err != nil {
 		t.Errorf("found error '%+v'", err)
 	}
@@ -77,7 +78,9 @@ func TestMoveFileOnToExistingFile(t *testing.T) {
 	}
 	file.Close()
 
-	err = MoveFile(origin, target)
+	manipluator := NewFileManipulator(&MountedFileHandler{})
+	manipluator.MoveFile(origin, target)
+
 	if err != nil {
 		t.Errorf("found error '%+v'", err)
 	}
@@ -111,7 +114,9 @@ func TestMoveFileOnToCorruptExistingFile(t *testing.T) {
 	}
 	file.Close()
 
-	err = MoveFile(origin, target)
+	manipluator := NewFileManipulator(&MountedFileHandler{})
+	manipluator.MoveFile(origin, target)
+
 	if err != nil {
 		t.Errorf("found error '%+v'", err)
 	}
