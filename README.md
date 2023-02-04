@@ -6,3 +6,21 @@
 [![Lint Status](https://github.com/jo-hoe/filemanipulator/workflows/lint/badge.svg)](https://github.com/jo-hoe/filemanipulator/actions?workflow=lint)
 [![CodeQL Status](https://github.com/jo-hoe/filemanipulator/workflows/CodeQL/badge.svg)](https://github.com/jo-hoe/filemanipulator/actions?workflow=CodeQL)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jo-hoe/filemanipulator)](https://goreportcard.com/report/github.com/jo-hoe/filemanipulator)
+
+## Linting
+
+Project used `golangci-lint` for linting.
+
+### Installation
+
+<https://golangci-lint.run/usage/install/>
+
+### Execution
+
+Run the linting locally by executing
+
+```cli
+golangci-lint run ./...
+```
+
+in the working directory
