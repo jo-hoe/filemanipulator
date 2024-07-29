@@ -1,6 +1,10 @@
 package filemanipulator
 
-import "io"
+import (
+	"fmt"
+	"io"
+	"os"
+)
 
 type FileProtocolHandler interface {
 	DoesFileExist(filePath string) bool
@@ -52,7 +56,9 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 		}
 	}
 
-	outputFile, err := m.handler.Create(targetPath)
+	// create an alias for filename while copying is ongoing
+	tempFileName := fmt.Sprintf("%s.part", targetPath)
+	outputFile, err := m.handler.Create(tempFileName)
 	if err != nil {
 		inputFile.Close()
 		return err
@@ -63,12 +69,18 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 			return
 		}
 
-		// check if copying was successfull
+		// check if copying was successful
 		if err != nil {
 			return
 		}
 
-		// The copy was successful, so now delete the original file
+		// rename to intended name
+		err = os.Rename(tempFileName, targetPath)
+		if err != nil {
+			return
+		}
+
+		// The copy was successful, now delete the original file
 		err = m.handler.Remove(sourcePath)
 	}()
 
@@ -79,5 +91,5 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 		return err
 	}
 
-	return nil
+	return err
 }
