@@ -7,6 +7,8 @@
 [![CodeQL Status](https://github.com/jo-hoe/filemanipulator/workflows/CodeQL/badge.svg)](https://github.com/jo-hoe/filemanipulator/actions?workflow=CodeQL)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jo-hoe/filemanipulator)](https://goreportcard.com/report/github.com/jo-hoe/filemanipulator)
 
+It helps to copy files across devices OS independently.
+
 ## Linting
 
 Project used `golangci-lint` for linting.
