@@ -1,3 +1,3 @@
 module github.com/jo-hoe/filemanipulator
 
-go 1.22
+go 1.26

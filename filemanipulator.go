@@ -3,13 +3,13 @@ package filemanipulator
 import (
 	"fmt"
 	"io"
-	"os"
 )
 
 type FileProtocolHandler interface {
 	DoesFileExist(filePath string) bool
 	Open(filePath string) (readerWriter io.ReadWriteCloser, err error)
 	Create(filePath string) (readerWriter io.ReadWriteCloser, err error)
+	Rename(oldPath string, newPath string) (err error)
 	Remove(filePath string) (err error)
 }
 
@@ -28,6 +28,20 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 	if err != nil {
 		return err
 	}
+	// MoveFile owns the handle it opened: close it exactly once, here.
+	inputFileClosed := false
+	closeInputFile := func() error {
+		if inputFileClosed {
+			return nil
+		}
+		inputFileClosed = true
+		return inputFile.Close()
+	}
+	defer func() {
+		if closeErr := closeInputFile(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	if m.handler.DoesFileExist(targetPath) {
 		// check if this is the same file
@@ -37,8 +51,7 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 		}
 		if filesEqual {
 			// same file already exists and can be removed from source
-			err = inputFile.Close()
-			if err != nil {
+			if err = closeInputFile(); err != nil {
 				return err
 			}
 			err = m.handler.Remove(sourcePath)
@@ -60,12 +73,12 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 	tempFileName := fmt.Sprintf("%s.part", targetPath)
 	outputFile, err := m.handler.Create(tempFileName)
 	if err != nil {
-		inputFile.Close()
 		return err
 	}
 	defer func() {
 		fileClosingError := outputFile.Close()
 		if fileClosingError != nil {
+			err = fileClosingError
 			return
 		}
 
@@ -75,7 +88,7 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 		}
 
 		// rename to intended name
-		err = os.Rename(tempFileName, targetPath)
+		err = m.handler.Rename(tempFileName, targetPath)
 		if err != nil {
 			return
 		}
@@ -86,8 +99,11 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 
 	// actual file copy
 	_, err = io.Copy(outputFile, inputFile)
-	inputFile.Close()
 	if err != nil {
+		return err
+	}
+	// close the input handle before the deferred rename/remove runs
+	if err = closeInputFile(); err != nil {
 		return err
 	}
 

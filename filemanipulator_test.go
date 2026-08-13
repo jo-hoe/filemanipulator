@@ -1,6 +1,7 @@
 package filemanipulator
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -12,11 +13,13 @@ type mockReadWriteCloser struct {
 	io.Reader
 	io.Writer
 	io.Closer
-	closed bool
+	closed     bool
+	closeCount int
 }
 
 func (m *mockReadWriteCloser) Close() error {
 	m.closed = true
+	m.closeCount++
 	return nil
 }
 
@@ -54,6 +57,26 @@ func TestFileManipulator_MoveFile(t *testing.T) {
 	}
 }
 
+// Regression test for double-close bug: MoveFile must close the input handle
+// it opened exactly once. See server logs reporting `close ...: file already closed`.
+func TestFileManipulator_MoveFile_ClosesInputExactlyOnce(t *testing.T) {
+	input := &mockReadWriteCloser{Reader: bytes.NewReader([]byte("data"))}
+	output := &mockReadWriteCloser{Writer: &bytes.Buffer{}}
+	handler := &MockFileHandler{
+		doesFileExist:      false, // target absent -> copy path (matches the failing scenario)
+		openreaderwriter:   input,
+		createreaderwriter: output,
+	}
+	m := NewFileManipulator(handler)
+
+	if err := m.MoveFile("source", "target"); err != nil {
+		t.Fatalf("MoveFile() unexpected error = %v", err)
+	}
+	if input.closeCount != 1 {
+		t.Errorf("input file closed %d times, want exactly 1", input.closeCount)
+	}
+}
+
 // Mock for tests
 type MockFileHandler struct {
 	doesFileExist      bool
@@ -61,6 +84,7 @@ type MockFileHandler struct {
 	openerror          error
 	createreaderwriter io.ReadWriteCloser
 	createerror        error
+	renameerror        error
 	removeerror        error
 }
 
@@ -75,6 +99,11 @@ func (m *MockFileHandler) Open(filePath string) (readerWriter io.ReadWriteCloser
 func (m *MockFileHandler) Remove(filePath string) (err error) {
 	return m.removeerror
 }
+
+func (m *MockFileHandler) Rename(oldPath string, newPath string) (err error) {
+	return m.renameerror
+}
+
 func (m *MockFileHandler) Create(filePath string) (readerWriter io.ReadWriteCloser, err error) {
 	return m.createreaderwriter, m.createerror
 }
@@ -99,9 +128,7 @@ func setupTestMoveEnvironment(t *testing.T) (rootDirectory string, leftDirectory
 		t.Error("could not create file")
 	}
 	fileName = filepath.Base(file.Name())
-	file.Close()
-
-	if err != nil {
+	if err := file.Close(); err != nil {
 		t.Errorf("could not close file %+v", err)
 	}
 
