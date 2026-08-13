@@ -12,7 +12,11 @@ func calculateFileHash(filePath string) (result []byte, err error) {
 	if err != nil {
 		return result, err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {

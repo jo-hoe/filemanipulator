@@ -36,7 +36,9 @@ func TestMoveFileOnToExistingFile(t *testing.T) {
 	if err != nil {
 		t.Error("could not create file")
 	}
-	file.Close()
+	if err := file.Close(); err != nil {
+		t.Errorf("could not close file %+v", err)
+	}
 
 	manipluator := NewFileManipulator(&MountedFileHandler{})
 	err = manipluator.MoveFile(origin, target)
@@ -66,7 +68,9 @@ func TestMoveFileOnToCorruptExistingFile(t *testing.T) {
 	if err != nil {
 		t.Error("could not write to file")
 	}
-	file.Close()
+	if err := file.Close(); err != nil {
+		t.Errorf("could not close file %+v", err)
+	}
 
 	manipluator := NewFileManipulator(&MountedFileHandler{})
 	err = manipluator.MoveFile(origin, target)

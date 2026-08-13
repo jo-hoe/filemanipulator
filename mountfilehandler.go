@@ -21,6 +21,11 @@ func (m *MountedFileHandler) Open(filePath string) (reader io.ReadWriteCloser, e
 func (m *MountedFileHandler) Remove(filePath string) (err error) {
 	return os.Remove(filePath)
 }
+
+func (m *MountedFileHandler) Rename(oldPath string, newPath string) (err error) {
+	return os.Rename(oldPath, newPath)
+}
+
 func (m *MountedFileHandler) Create(filePath string) (reader io.ReadWriteCloser, err error) {
 	return os.Create(filePath)
 }
