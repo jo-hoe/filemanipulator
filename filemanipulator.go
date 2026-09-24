@@ -76,10 +76,20 @@ func (m *FileManipulator) MoveFile(sourcePath, targetPath string) (err error) {
 		return err
 	}
 	defer func() {
+		// Flush data to stable storage before closing so a removed card or
+		// power loss cannot leave the target incomplete after the source is
+		// deleted. Not all handlers back a syncable device, so it is optional.
+		if err == nil {
+			if syncer, ok := outputFile.(interface{ Sync() error }); ok {
+				if syncErr := syncer.Sync(); syncErr != nil {
+					err = syncErr
+				}
+			}
+		}
+
 		fileClosingError := outputFile.Close()
-		if fileClosingError != nil {
+		if fileClosingError != nil && err == nil {
 			err = fileClosingError
-			return
 		}
 
 		// check if copying was successful
